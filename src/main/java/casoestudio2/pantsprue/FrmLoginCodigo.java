@@ -1,5 +1,7 @@
 package casoestudio2.pantsprue;
 
+import casoestudio2.datos.Sistema;
+import casoestudio2.modelo.Usuario;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -12,22 +14,26 @@ public class FrmLoginCodigo extends JFrame {
     private JPasswordField txtPassword;
     private JButton btnIngresar;
     private JButton btnCancelar;
+    private Sistema sistema;
 
     public FrmLoginCodigo() {
-        // 1. Configuración básica de la ventana externa
+        
+        sistema = new Sistema();
+
+        
         setTitle("Control de Acceso - Fidecompro");
         setSize(350, 180);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null); // Centra en pantalla automáticamente
         setLayout(new BorderLayout(10, 10)); // Margen entre secciones
 
-        // 2. Inicialización de componentes internos
+        
         txtUsuario = new JTextField();
         txtPassword = new JPasswordField();
         btnIngresar = new JButton("Ingresar");
         btnCancelar = new JButton("Cancelar");
 
-        // 3. Crear el panel central estructurado en una cuadrícula (Grid) de 2 columnas
+        
         JPanel panelCampos = new JPanel(new GridLayout(2, 2, 5, 10));
         panelCampos.setBorder(BorderFactory.createEmptyBorder(15, 15, 5, 15));
         
@@ -36,16 +42,16 @@ public class FrmLoginCodigo extends JFrame {
         panelCampos.add(new JLabel("Contraseña:"));
         panelCampos.add(txtPassword);
 
-        // 4. Crear el panel inferior para agrupar los botones horizontalmente
+        
         JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 10));
         panelBotones.add(btnIngresar);
         panelBotones.add(btnCancelar);
 
-        // 5. Agregar los paneles organizados al JFrame principal
+        
         add(panelCampos, BorderLayout.CENTER);
         add(panelBotones, BorderLayout.SOUTH);
 
-        // 6. Programar la lógica de los eventos (ActionListeners)
+        
         btnIngresar.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -59,7 +65,7 @@ public class FrmLoginCodigo extends JFrame {
             txtUsuario.requestFocus();
         });
     }
-
+    
     private void ejecutarLogin() {
         String usuario = txtUsuario.getText().trim();
         String password = new String(txtPassword.getPassword()).trim();
@@ -69,18 +75,27 @@ public class FrmLoginCodigo extends JFrame {
             return;
         }
 
-        if (usuario.equals("admin") && password.equals("1234")) {
-            JOptionPane.showMessageDialog(this, "Bienvenido Administrador.");
-            new FrmMenuCodigo("Administrador").setVisible(true);
-            this.dispose();
-        } else if (usuario.equals("cajero") && password.equals("5678")) {
-            JOptionPane.showMessageDialog(this, "Bienvenido Cajero.");
-            new FrmMenuCodigo("Cajero").setVisible(true);
-            this.dispose();
+       Usuario usuarioLogueado = sistema.validarUsuario(usuario, password);
+
+       if (usuarioLogueado != null) {
+
+           JOptionPane.showMessageDialog(this,
+                   "Bienvenido " + usuarioLogueado.getRol());
+
+           new FrmMenuCodigo(usuarioLogueado.getRol()).setVisible(true);
+
+           dispose();
+
         } else {
-            JOptionPane.showMessageDialog(this, "Error: Usuario o contraseña incorrectos", "Error", JOptionPane.ERROR_MESSAGE);
-            txtPassword.setText("");
-            txtPassword.requestFocus();
+
+           JOptionPane.showMessageDialog(this,
+                   "Error: Usuario o contraseña incorrectos",
+                   "Error",
+                   JOptionPane.ERROR_MESSAGE);
+
+           txtPassword.setText("");
+           txtPassword.requestFocus();
+
         }
     }
 }

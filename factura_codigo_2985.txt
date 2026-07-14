@@ -1,0 +1,7 @@
+=== RECIBO GENERADO AUTOMÁTICAMENTE POR CÓDIGO ===
+Factura N°: 2985
+Cliente: María López
+--------------------------------------------------
+Leche x2 = ¢1900.0
+--------------------------------------------------
+TOTAL FINAL DE LA OPERACIÓN: ¢2147.0

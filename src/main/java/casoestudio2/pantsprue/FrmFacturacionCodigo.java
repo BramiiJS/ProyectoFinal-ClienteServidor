@@ -11,6 +11,7 @@ import casoestudio2.modelo.Cliente;
 import casoestudio2.modelo.Producto;
 import casoestudio2.modelo.DetalleFactura;
 import casoestudio2.modelo.Factura;
+import casoestudio2.excepciones.StockInsuficienteException;
 
 
 public class FrmFacturacionCodigo extends JFrame {
@@ -175,11 +176,7 @@ public class FrmFacturacionCodigo extends JFrame {
 
             int cantidad = Integer.parseInt(txtCantidad.getText());
 
-            if (cantidad > producto.getStockDisponible()) {
-                JOptionPane.showMessageDialog(this,
-                        "No hay suficiente stock.");
-                return;
-            }
+            
 
             DetalleFactura detalle = new DetalleFactura(producto, cantidad);
 
@@ -199,8 +196,13 @@ public class FrmFacturacionCodigo extends JFrame {
 
         } catch (NumberFormatException ex) {
 
+    JOptionPane.showMessageDialog(this,
+            "Cantidad inválida.");
+
+        } catch (StockInsuficienteException ex) {
+
             JOptionPane.showMessageDialog(this,
-                    "Cantidad inválida.");
+                    ex.getMessage());
 
         }
         

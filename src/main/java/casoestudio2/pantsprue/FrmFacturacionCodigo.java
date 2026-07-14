@@ -6,6 +6,12 @@ import java.awt.*;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import casoestudio2.datos.Sistema;
+import casoestudio2.modelo.Cliente;
+import casoestudio2.modelo.Producto;
+import casoestudio2.modelo.DetalleFactura;
+import casoestudio2.modelo.Factura;
+
 
 public class FrmFacturacionCodigo extends JFrame {
 
@@ -15,22 +21,28 @@ public class FrmFacturacionCodigo extends JFrame {
     private JButton btnBuscarCliente, btnAgregar, btnProcesar;
     private JTable tblCarrito;
     private DefaultTableModel modeloTabla;
+    private Sistema sistema;
+    private Cliente clienteActual;
+    private Factura facturaActual;
 
     public FrmFacturacionCodigo() {
+        
+        sistema = new Sistema();
+        
         setTitle("Módulo de Facturación Electrónica - Fidecompro");
         setSize(650, 550);
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); // Solo cierra esta ventana, no el programa entero
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout(10, 10));
 
-        // --- BLOQUE 1: PANEL SUPERIOR (Datos Cliente) ---
+        
         JPanel panelCliente = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
         panelCliente.setBorder(BorderFactory.createTitledBorder("Datos del Cliente"));
         
         txtCedula = new JTextField(8);
         btnBuscarCliente = new JButton("Buscar");
         txtNombreCliente = new JTextField(15);
-        txtNombreCliente.setEditable(false); // Solo lectura simulada
+        txtNombreCliente.setEditable(false);
         
         panelCliente.add(new JLabel("Cédula:"));
         panelCliente.add(txtCedula);
@@ -38,7 +50,7 @@ public class FrmFacturacionCodigo extends JFrame {
         panelCliente.add(new JLabel("Nombre:"));
         panelCliente.add(txtNombreCliente);
 
-        // --- BLOQUE 2: PANEL CENTRAL IZQUIERDO (Entrada de Producto) ---
+        
         JPanel panelEntradaProd = new JPanel(new GridLayout(5, 2, 5, 8));
         panelEntradaProd.setBorder(BorderFactory.createTitledBorder("Agregar Artículos"));
         
@@ -46,6 +58,10 @@ public class FrmFacturacionCodigo extends JFrame {
         txtNombreProducto = new JTextField();
         txtCantidad = new JTextField();
         txtPrecio = new JTextField();
+        
+        txtNombreProducto.setEditable(false);
+        txtPrecio.setEditable(false);
+        
         btnAgregar = new JButton("Agregar al Carrito");
 
         panelEntradaProd.add(new JLabel("ID Producto:"));
@@ -56,22 +72,22 @@ public class FrmFacturacionCodigo extends JFrame {
         panelEntradaProd.add(txtCantidad);
         panelEntradaProd.add(new JLabel("Precio Unitario:"));
         panelEntradaProd.add(txtPrecio);
-        panelEntradaProd.add(new JLabel("")); // Celda de relleno en el Grid
+        panelEntradaProd.add(new JLabel(""));
         panelEntradaProd.add(btnAgregar);
 
-        // --- BLOQUE 3: TABLA DE DETALLES (Carrito de Compras) ---
+        
         String[] columnas = {"Código", "Detalle", "Cantidad", "Precio Unitario", "Subtotal Linea"};
         modeloTabla = new DefaultTableModel(columnas, 0);
         tblCarrito = new JTable(modeloTabla);
         JScrollPane scrollTabla = new JScrollPane(tblCarrito);
         scrollTabla.setPreferredSize(new Dimension(600, 150));
 
-        // Unión de entradas y tabla en un contenedor intermedio
+        
         JPanel panelCentralContenedor = new JPanel(new BorderLayout(5, 5));
         panelCentralContenedor.add(panelEntradaProd, BorderLayout.NORTH);
         panelCentralContenedor.add(scrollTabla, BorderLayout.CENTER);
 
-        // --- BLOQUE 4: PANEL INFERIOR (Totales y Facturación) ---
+        
         JPanel panelInferior = new JPanel(new BorderLayout());
         panelInferior.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
 
@@ -90,46 +106,131 @@ public class FrmFacturacionCodigo extends JFrame {
         panelInferior.add(panelTotales, BorderLayout.EAST);
         panelInferior.add(btnProcesar, BorderLayout.WEST);
 
-        // --- MONTAJE FINAL EN EL FRAME ---
+        
         add(panelCliente, BorderLayout.NORTH);
         add(panelCentralContenedor, BorderLayout.CENTER);
         add(panelInferior, BorderLayout.SOUTH);
 
-        // --- ASIGNACIÓN DE EVENTOS POR CÓDIGO ---
-        btnBuscarCliente.addActionListener(e -> txtNombreCliente.setText("Cliente Genérico S.A."));
+        txtIdProducto.addActionListener(e -> {
+
+        Producto producto = sistema.buscarProducto(txtIdProducto.getText());
+
+        if (producto != null) {
+
+            txtNombreProducto.setText(producto.getNombreComercial());
+            txtPrecio.setText(String.valueOf(producto.getPrecioBase()));
+
+        } else {
+
+            txtNombreProducto.setText("");
+            txtPrecio.setText("");
+
+        }
+
+    });
+        
+        btnBuscarCliente.addActionListener(e -> {
+
+           String cedula = txtCedula.getText();
+
+           clienteActual = sistema.buscarCliente(cedula);
+
+           if(clienteActual != null){
+
+               txtNombreCliente.setText(
+                   clienteActual.getNombreCompleto()
+               );
+
+               facturaActual = new Factura(
+                   (int)(Math.random()*10000),
+                   clienteActual
+               );
+
+            }else{
+
+                JOptionPane.showMessageDialog(this,
+                        "Cliente no encontrado");
+
+            }
+
+});
 
         btnAgregar.addActionListener(e -> {
-            try {
-                String id = txtIdProducto.getText();
-                String nombre = txtNombreProducto.getText();
-                int cant = Integer.parseInt(txtCantidad.getText());
-                double pre = Double.parseDouble(txtPrecio.getText());
-                double subLine = cant * pre;
 
-                modeloTabla.addRow(new Object[]{id, nombre, cant, pre, subLine});
-                recalcularTotales();
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(this, "Verifique los datos numéricos de cantidad o precio.", "Error de conversión", JOptionPane.ERROR_MESSAGE);
+        try {
+
+            if (facturaActual == null) {
+                JOptionPane.showMessageDialog(this,
+                        "Primero debe buscar un cliente.");
+                return;
             }
-        });
+
+            Producto producto = sistema.buscarProducto(txtIdProducto.getText());
+
+            if (producto == null) {
+                JOptionPane.showMessageDialog(this,
+                        "Producto no encontrado.");
+                return;
+            }
+
+            int cantidad = Integer.parseInt(txtCantidad.getText());
+
+            if (cantidad > producto.getStockDisponible()) {
+                JOptionPane.showMessageDialog(this,
+                        "No hay suficiente stock.");
+                return;
+            }
+
+            DetalleFactura detalle = new DetalleFactura(producto, cantidad);
+
+            facturaActual.agregarDetalle(detalle);
+
+            modeloTabla.addRow(new Object[]{
+                producto.getIdProducto(),
+                producto.getNombreComercial(),
+                cantidad,
+                producto.getPrecioBase(),
+                detalle.calcularSubtotal()
+            });
+
+            producto.actualizarStock(-cantidad);
+
+            recalcularTotales();
+
+        } catch (NumberFormatException ex) {
+
+            JOptionPane.showMessageDialog(this,
+                    "Cantidad inválida.");
+
+        }
+        
+   });
+
 
         btnProcesar.addActionListener(e -> procesarFactura());
     }
 
     private void recalcularTotales() {
-        double subtotalGeneral = 0;
-        for (int i = 0; i < modeloTabla.getRowCount(); i++) {
-            subtotalGeneral += (double) modeloTabla.getValueAt(i, 4);
-        }
-        double ivatasa = subtotalGeneral * 0.13;
-        double totalNeto = subtotalGeneral + ivatasa;
 
-        txtSubtotal.setText(String.valueOf(subtotalGeneral));
-        txtImpuesto.setText(String.valueOf(ivatasa));
-        txtTotal.setText(String.valueOf(totalNeto));
-    }
+        if (facturaActual == null) {
+            return;
+        }
+
+        txtSubtotal.setText(String.valueOf(facturaActual.calcularSubtotal()));
+        txtImpuesto.setText(String.valueOf(facturaActual.calcularIVA()));
+        txtTotal.setText(String.valueOf(facturaActual.calcularTotal()));
+
+        }
 
     private void procesarFactura() {
+        
+        if (facturaActual == null) {
+        JOptionPane.showMessageDialog(this, "No hay factura para procesar.");
+        return;
+        }
+
+        sistema.agregarFactura(facturaActual);
+        
         int num = (int) (Math.random() * 10000 + 1);
         String name = "factura_codigo_" + num + ".txt";
 
@@ -138,7 +239,7 @@ public class FrmFacturacionCodigo extends JFrame {
             writer.newLine();
             writer.write("Factura N°: " + num);
             writer.newLine();
-            writer.write("Cliente: " + txtNombreCliente.getText());
+            writer.write("Cliente: " + facturaActual.getCliente().getNombreCompleto());
             writer.newLine();
             writer.write("--------------------------------------------------");
             writer.newLine();
